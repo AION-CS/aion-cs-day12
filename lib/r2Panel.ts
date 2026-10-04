@@ -1,6 +1,6 @@
 import { ARCH_BY_ID, ARCH_IDS, R2_BUDGET, R2_MONTHS } from "@/data/route2";
 import type { ArchId } from "@/data/route2";
-import { CLEAN_ID, ENGINE_IDS, KPI_SYSTEM_ID, PANEL, READY_BAR, WEAK_POINTS } from "@/data/route2Panel";
+import { CLEAN_ID, ENGINE_IDS, KPI_SYSTEM_ID, PANEL, READY_BAR, WEAK_POINTS, TIER_LABEL } from "@/data/route2Panel";
 import type { Tier } from "@/data/route2Panel";
 import { euro, tt } from "@/lib/lang";
 
@@ -61,11 +61,16 @@ export function dataOk(r2: HasTier, id: ArchId, scn: Scn): boolean {
 export type ItemView = { id: ArchId; tier: Tier; start: number | null; inUse: number | null; measOk: boolean; dataOk: boolean; late: boolean; never: boolean; notes: string[] };
 export type Bars = { spent: number; over: number; left: number; meas: number | null; risk: number | null };
 export type TestId = "measure" | "purpose" | "data" | "budget";
-export type OpenDetail = { fact: string; rule: string; ways: string[] };
+/** One way to act on an open test; `go` names the Step A cards it is done on (each becomes a jump chip in the panel). */
+export type Way = { text: string; go: ArchId[] };
+/** One open finding: the fact, what it means in plain words, the rule, the items involved and the ways to act. */
+export type OpenDetail = { fact: string; plain: string; rule: string; where: ArchId[]; ways: Way[] };
 export type TestView = { id: TestId; name: string; rule: string; applies: boolean; holds: boolean; open: OpenDetail[] };
 export type PlanView = { items: Record<ArchId, ItemView>; funded: ArchId[]; nowCount: number; bars: Bars; tests: TestView[]; holding: number; applicable: number };
 
 const nm = (id: ArchId) => PANEL[id].short;
+/** The title printed on the item card in Step A, so a step names the card the learner will see. */
+const card = (id: ArchId) => tt(`“${ARCH_BY_ID[id].name}”`, `„${ARCH_BY_ID[id].name}“`);
 
 function itemView(r2: HasTier, id: ArchId, scn: Scn): ItemView {
   const tier = tierOf(r2, id);
@@ -142,10 +147,12 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
     const part = f0 === null ? tt("the membership is not funded", "die Mitgliedschaft ist nicht finanziert") : tt(`the membership starts in month ${f0}`, `die Mitgliedschaft startet in Monat ${f0}`);
     mOpen.push({
       fact: tt(`${nm(id)}: starts in month ${v.start}, but ${part}.`, `${nm(id)}: startet in Monat ${v.start}, aber ${part}.`),
+      plain: tt(`${nm(id)} would start before members have the membership it builds on. It would thank or gather people for something they do not have yet.`, `${nm(id)} würde starten, bevor Mitglieder die Mitgliedschaft haben, auf der es aufbaut. Es würde Menschen für etwas danken oder zusammenbringen, das sie noch nicht haben.`),
+      where: [id, KPI_SYSTEM_ID],
       rule: TEST_RULE.measure(),
       ways: [
-        tt("Set the membership to Now: it starts in month 1, before any programme part.", "Setzen Sie die Mitgliedschaft auf „Jetzt“: Sie startet in Monat 1, vor jedem Programmbaustein."),
-        tt(`Or set ${nm(id)} to Not now until it is in place.`, `Oder setzen Sie ${nm(id)} auf „Jetzt nicht“, bis sie steht.`),
+        { text: tt("Set the membership to Now: it starts in month 1, before any programme part.", "Setzen Sie die Mitgliedschaft auf „Jetzt“: Sie startet in Monat 1, vor jedem Programmbaustein."), go: [KPI_SYSTEM_ID] },
+        { text: tt(`Or, on the card ${card(id)}, press “Not now” until it is in place.`, `Oder drücken Sie auf der Karte ${card(id)} „Jetzt nicht“, bis sie steht.`), go: [id] },
       ],
     });
   }
@@ -157,10 +164,12 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
       fact: PANEL[id].blackBox
         ? tt(`${nm(id)} names no KPI it moves, and its rules and results are not shown.`, `${nm(id)} nennt keinen KPI, den es bewegt, und seine Regeln und Ergebnisse werden nicht gezeigt.`)
         : tt(`${nm(id)} gives members no added value: it costs margin on every renewal, including those who would have renewed anyway, and keeps customers only until someone offers more.`, `${nm(id)} gibt Mitgliedern keinen Mehrwert: Er kostet Marge bei jeder Verlängerung, auch bei denen, die ohnehin verlängert hätten, und hält Kunden nur, bis jemand mehr bietet.`),
+      plain: PANEL[id].blackBox ? tt(`You would pay ${euro(ARCH_BY_ID[id].cost)} for a tool that does not show how it works or what it changes for customers. After ${R2_MONTHS} months nobody at ConnectIT could say whether that money worked.`, `Sie würden ${euro(ARCH_BY_ID[id].cost)} für ein Werkzeug zahlen, das nicht zeigt, wie es arbeitet oder was es für Kunden verändert. Nach ${R2_MONTHS} Monaten könnte bei ConnectIT niemand sagen, ob dieses Geld gewirkt hat.`) : tt(`A discount on every renewal costs ${euro(ARCH_BY_ID[id].cost)} of margin, also on customers who would have stayed anyway, and it holds customers only until a rival offers more. It adds nothing members can use.`, `Ein Rabatt auf jede Verlängerung kostet ${euro(ARCH_BY_ID[id].cost)} Marge, auch bei Kunden, die ohnehin geblieben wären, und hält Kunden nur, bis ein Wettbewerber mehr bietet. Er gibt Mitgliedern nichts, was sie nutzen können.`),
+      where: [id],
       rule: TEST_RULE.purpose(),
       ways: [
-        tt(`Set it to Not now and use the ${euro(ARCH_BY_ID[id].cost)} on an item that gives members added value.`, `Setzen Sie es auf „Jetzt nicht“ und nutzen Sie die ${euro(ARCH_BY_ID[id].cost)} für einen Punkt, der Mitgliedern einen Mehrwert gibt.`),
-        tt("Or keep it, and say in your reasons how ConnectIT will limit the margin it costs and measure its effect.", "Oder behalten Sie es, und sagen Sie in Ihren Begründungen, wie ConnectIT die Marge, die es kostet, begrenzen und seine Wirkung messen wird."),
+        { text: tt(`Set it to Not now and use the ${euro(ARCH_BY_ID[id].cost)} on an item that gives members added value.`, `Setzen Sie es auf „Jetzt nicht“ und nutzen Sie die ${euro(ARCH_BY_ID[id].cost)} für einen Punkt, der Mitgliedern einen Mehrwert gibt.`), go: [id] },
+        { text: tt("Or keep it, and say in your reasons how ConnectIT will limit the margin it costs and measure its effect.", "Oder behalten Sie es, und sagen Sie in Ihren Begründungen, wie ConnectIT die Marge, die es kostet, begrenzen und seine Wirkung messen wird."), go: [] },
       ],
     }));
 
@@ -171,8 +180,13 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
     if (v.never) {
       dOpen.push({
         fact: tt(`${nm(id)}: waits for the proof of uptake, but the monthly review it waits for is not set to Now, so it never starts.`, `${nm(id)}: wartet auf den Beleg der Nutzung, aber das monatliche Review, auf das es wartet, steht nicht auf „Jetzt“, also startet es nie.`),
+        plain: tt(`“${TIER_LABEL.later}” means: wait until ${card(CLEAN_ID)} is in use. But that item is not set to Now, so ${nm(id)} waits for ever and its money is booked for nothing.`, `„${TIER_LABEL.later}“ heißt: warten, bis ${card(CLEAN_ID)} im Einsatz ist. Dieser Punkt steht aber nicht auf „Jetzt“, also wartet ${nm(id)} für immer, und sein Geld ist für nichts verbucht.`),
+        where: [id, CLEAN_ID],
         rule: TEST_RULE.data(),
-        ways: [tt("Set the CRM KPIs and monthly review to Now.", "Setzen Sie die KPIs im CRM und das monatliche Review auf „Jetzt“."), tt(`Or set ${nm(id)} to Not now.`, `Oder setzen Sie ${nm(id)} auf „Jetzt nicht“.`)],
+        ways: [
+          { text: tt("Set the CRM KPIs and monthly review to Now.", "Setzen Sie die KPIs im CRM und das monatliche Review auf „Jetzt“."), go: [CLEAN_ID] },
+          { text: tt(`Or, on the card ${card(id)}, press “Not now”.`, `Oder drücken Sie auf der Karte ${card(id)} „Jetzt nicht“.`), go: [id] },
+        ],
       });
       continue;
     }
@@ -181,19 +195,23 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
     if (PANEL[id].cleaned) {
       dOpen.push({
         fact: tt(`${nm(id)}: starts in month ${v.start} on an added value used by ${val}% of pilot members, below ${READY_BAR}%. The monthly review is ${isFunded(r2, CLEAN_ID) && tierOf(r2, CLEAN_ID) === "now" ? `in use only in month ${inUseOf(r2, CLEAN_ID)}` : "not set to Now"}.`, `${nm(id)}: startet in Monat ${v.start} auf einem Mehrwert, den ${val} % der Pilotmitglieder genutzt haben, unter ${READY_BAR} %. Das monatliche Review ist ${isFunded(r2, CLEAN_ID) && tierOf(r2, CLEAN_ID) === "now" ? `erst in Monat ${inUseOf(r2, CLEAN_ID)} im Einsatz` : "nicht auf „Jetzt“ gesetzt"}.`),
+        plain: tt(`${nm(id)} would start when only ${val}% of pilot members used the added value it builds on, so it would scale an offer that is not proven. The monthly review shows exactly this uptake, but ${nm(id)} starts before the review is in use.`, `${nm(id)} würde starten, wenn erst ${val} % der Pilotmitglieder den Mehrwert genutzt haben, auf dem es aufbaut, und also ein Angebot skalieren, das nicht belegt ist. Das monatliche Review zeigt genau diese Nutzung, aber ${nm(id)} startet, bevor das Review im Einsatz ist.`),
+        where: [id, CLEAN_ID],
         rule: TEST_RULE.data(),
         ways: [
-          tt(`Set the CRM KPIs and monthly review to Now and ${nm(id)} to After the uptake is proven: it then starts in month ${1 + monthsOf(CLEAN_ID)}, when the review is in use.`, `Setzen Sie die KPIs im CRM und das monatliche Review auf „Jetzt“ und ${nm(id)} auf „Wenn die Nutzung belegt ist“: Es startet dann in Monat ${1 + monthsOf(CLEAN_ID)}, wenn das Review im Einsatz ist.`),
-          tt(`Or set ${nm(id)} to Not now.`, `Oder setzen Sie ${nm(id)} auf „Jetzt nicht“.`),
+          { text: tt(`Set the CRM KPIs and monthly review to Now and ${nm(id)} to After the uptake is proven: it then starts in month ${1 + monthsOf(CLEAN_ID)}, when the review is in use.`, `Setzen Sie die KPIs im CRM und das monatliche Review auf „Jetzt“ und ${nm(id)} auf „Wenn die Nutzung belegt ist“: Es startet dann in Monat ${1 + monthsOf(CLEAN_ID)}, wenn das Review im Einsatz ist.`), go: [CLEAN_ID, id] },
+          { text: tt(`Or, on the card ${card(id)}, press “Not now”.`, `Oder drücken Sie auf der Karte ${card(id)} „Jetzt nicht“.`), go: [id] },
         ],
       });
     } else {
       dOpen.push({
         fact: tt(`${nm(id)}: starts on an added value used by ${val}% of pilot members, below ${READY_BAR}%. The monthly review does not prove this uptake.`, `${nm(id)}: startet auf einem Mehrwert, den ${val} % der Pilotmitglieder genutzt haben, unter ${READY_BAR} %. Das monatliche Review belegt diese Nutzung nicht.`),
+        plain: tt(`${nm(id)} would start when only ${val}% of pilot members used the added value it builds on, so it would scale an offer that is not proven. Nothing in this plan proves this uptake.`, `${nm(id)} würde starten, wenn erst ${val} % der Pilotmitglieder den Mehrwert genutzt haben, auf dem es aufbaut, und also ein Angebot skalieren, das nicht belegt ist. Nichts in diesem Plan belegt diese Nutzung.`),
+        where: [id],
         rule: TEST_RULE.data(),
         ways: [
-          tt(`Set ${nm(id)} to Not now until more members use the value.`, `Setzen Sie ${nm(id)} auf „Jetzt nicht“, bis mehr Mitglieder den Mehrwert nutzen.`),
-          tt(`Or keep it, and say in your reasons what you will do if the uptake stays below ${READY_BAR}%.`, `Oder behalten Sie es, und sagen Sie in Ihren Begründungen, was Sie tun, wenn die Nutzung unter ${READY_BAR} % bleibt.`),
+          { text: tt(`On the card ${card(id)}, press “Not now” until more members use the value.`, `Drücken Sie auf der Karte ${card(id)} „Jetzt nicht“, bis mehr Mitglieder den Mehrwert nutzen.`), go: [id] },
+          { text: tt(`Or keep it, and say in your reasons what you will do if the uptake stays below ${READY_BAR}%.`, `Oder behalten Sie es, und sagen Sie in Ihren Begründungen, was Sie tun, wenn die Nutzung unter ${READY_BAR} % bleibt.`), go: [] },
         ],
       });
     }
@@ -204,10 +222,12 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
   if (bars.over > 0)
     bOpen.push({
       fact: tt(`The funded items cost ${euro(bars.spent)}, which is ${euro(bars.over)} over the ${euro(R2_BUDGET)} budget.`, `Die finanzierten Punkte kosten ${euro(bars.spent)}, das sind ${euro(bars.over)} über dem Budget von ${euro(R2_BUDGET)}.`),
+      plain: tt(`Your plan spends more than the ${euro(R2_BUDGET)} you have. To fit, take items worth at least ${euro(bars.over)} out of the plan. Your funded items are listed below with their costs, most expensive first; choose the one whose case you find weakest.`, `Ihr Plan gibt mehr aus als die ${euro(R2_BUDGET)}, die Sie haben. Damit er passt, nehmen Sie Punkte im Wert von mindestens ${euro(bars.over)} aus dem Plan. Ihre finanzierten Punkte stehen unten mit ihren Kosten, die teuersten zuerst; wählen Sie den, dessen Begründung Sie am schwächsten finden.`),
+      where: [],
       rule: TEST_RULE.budget(),
       ways: [
-        tt("Set the item with the weakest case to Not now (every card prints its cost).", "Setzen Sie den Punkt mit der schwächsten Begründung auf „Jetzt nicht“ (jede Karte druckt ihre Kosten)."),
-        tt("Or keep the total, and say in your reasons why it is worth going over.", "Oder behalten Sie die Summe, und sagen Sie in Ihren Begründungen, warum es sich lohnt, darüber zu liegen."),
+        { text: tt(`On one or more of these cards, press “Not now” (together at least ${euro(bars.over)}):`, `Drücken Sie auf einer oder mehreren dieser Karten „Jetzt nicht“ (zusammen mindestens ${euro(bars.over)}):`), go: [...f].sort((a, c) => ARCH_BY_ID[c].cost - ARCH_BY_ID[a].cost) },
+        { text: tt("Or keep the total, and say in your reasons why it is worth going over.", "Oder behalten Sie die Summe, und sagen Sie in Ihren Begründungen, warum es sich lohnt, darüber zu liegen."), go: [] },
       ],
     });
   for (const id of f) {
@@ -215,10 +235,12 @@ function testsOf(r2: HasTier, scn: Scn, items: Record<ArchId, ItemView>, bars: B
     if (!v.late) continue;
     bOpen.push({
       fact: tt(`${nm(id)}: in use only in month ${v.inUse}, after the ${R2_MONTHS} months (${monthsOf(id)} months to build, starting in month ${v.start}).`, `${nm(id)}: erst in Monat ${v.inUse} im Einsatz, nach den ${R2_MONTHS} Monaten (${monthsOf(id)} Monate Aufbau, Start in Monat ${v.start}).`),
+      plain: tt(`${nm(id)} would be ready only after the plan ends, so it cannot show any result inside the ${R2_MONTHS} months.`, `${nm(id)} wäre erst nach dem Ende des Plans fertig und kann also innerhalb der ${R2_MONTHS} Monate kein Ergebnis zeigen.`),
+      where: [id],
       rule: TEST_RULE.budget(),
       ways: [
-        v.tier === "later" ? tt(`Set ${nm(id)} to Now: it then starts in month 1.`, `Setzen Sie ${nm(id)} auf „Jetzt“: Es startet dann in Monat 1.`) : tt(`Set ${nm(id)} to Not now.`, `Setzen Sie ${nm(id)} auf „Jetzt nicht“.`),
-        tt(`Or keep it, and say in your reasons what the plan does without it before month ${R2_MONTHS + 1}.`, `Oder behalten Sie es, und sagen Sie in Ihren Begründungen, was der Plan ohne es vor Monat ${R2_MONTHS + 1} tut.`),
+        { text: v.tier === "later" ? tt(`On the card ${card(id)}, press “Now”: it then starts in month 1.`, `Drücken Sie auf der Karte ${card(id)} „Jetzt“: Es startet dann in Monat 1.`) : tt(`On the card ${card(id)}, press “Not now”.`, `Drücken Sie auf der Karte ${card(id)} „Jetzt nicht“.`), go: [id] },
+        { text: tt(`Or keep it, and say in your reasons what the plan does without it before month ${R2_MONTHS + 1}.`, `Oder behalten Sie es, und sagen Sie in Ihren Begründungen, was der Plan ohne es vor Monat ${R2_MONTHS + 1} tut.`), go: [] },
       ],
     });
   }
