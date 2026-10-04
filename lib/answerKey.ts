@@ -5,19 +5,16 @@ import { BUDGET, JOINS_LABEL, MEASURES, MODEL_COST, MODEL_MEASURES, PROBLEM_LABE
 import {
   ACTION_LABEL,
   ARCH_BY_ID,
+  ARCH_IDS,
   COMPS,
   COMP_BY_ID,
   CRIT_IDS,
   DECISIONS,
   KPIS,
   LOGIC_OWNER_LABEL,
-  MODEL_ARCH,
   MODEL_COMPS,
   MODEL_DECISION,
   MODEL_GREATEST,
-  MODEL_TRIPWIRE,
-  OWNERS,
-  OWNER_ACCEPT,
   OWNER_ACCEPT_LOGIC,
   PRINCIPLES,
   PRINCIPLE_IDS,
@@ -31,6 +28,8 @@ import {
   useOf,
 } from "@/data/route2";
 import type { ArchId } from "@/data/route2";
+import { MODEL_ARCH, MODEL_TIER, PANEL, TIER_LABEL } from "@/data/route2Panel";
+import { planOf, rangeOf } from "@/lib/r2Panel";
 import { MODEL_ORDER } from "@/data/mentorKey";
 import { euro } from "@/lib/lang";
 
@@ -236,42 +235,32 @@ export function logicKey(): AnswerKeyBlock {
   };
 }
 
-export function ownerKey(funded: ArchId[]): AnswerKeyBlock {
-  const ids = funded.length ? funded : MODEL_ARCH;
+export function architectureKey(): AnswerKeyBlock {
+  const spent = MODEL_ARCH.reduce((x, id) => x + ARCH_BY_ID[id].cost, 0);
+  const alt = { ...MODEL_TIER, personal: "now" as const };
+  const why: Record<ArchId, string> = {
+    foundation: "Now. The referral thank-you, the community and the KPIs all build on it; it starts in month 1, no later than the first programme part (the test “the membership comes first”). At 8 weeks it is in use in month 3.",
+    chat: "Now. €30,000 for 4 weeks: a short form in the portal and a free training day for both firms once the referred firm signs. The training seats are used by 88% of pilot members (73% if the uptake is weaker: it then rests on a benefit used by less than 80%, which is why Step B asks what the learner watches).",
+    personal: "After the uptake is proven. The customer day and the user groups are used by only 60% of pilot members; with the CRM KPIs and review Now it starts in month 2 and is in use in month 4, inside the six months. Now is possible too, but it starts in month 1 on uptake below 80% and the uptake test opens.",
+    routing: "Now. €15,000 for 4 weeks: a page where referred firms read short customer statements and book a call. It moves the share of referred firms that book a call.",
+    training: "Now. €10,000 for 2 weeks: which benefit each member used and which referral became a customer, with a monthly meeting that decides by the KPIs. It is the item “After the uptake is proven” waits for.",
+    tracking: "Now. €15,000 for 3 weeks: a check that the referred firm is new and independent, a cap per customer and a thank-you only after signing. A defensible cut if the learner needs the room, and then the reading names the misuse risk.",
+    suite: "Not now. A black box: its rules and results are not shown, €60,000 takes the plan €40,000 over the budget, and at 24 weeks it is in use only in month 7, after the six months. Two tests open (purpose, budget and months).",
+    relaunch: "Not now. A 10% discount for every renewal gives no added value, costs €80,000 of margin including on customers who would have renewed anyway, and keeps them only until someone offers more; it would push the plan €60,000 over the budget.",
+  };
   return {
-    title: "Block 3.5 · Owners, sequence and funding",
-    expected: `Model: ${MODEL_ARCH.map((id) => `${ARCH_BY_ID[id].name} (${OWNERS[OWNER_ACCEPT[id][0]].name})`).join(", ")} · ${euro(MODEL_ARCH.reduce((s, id) => s + ARCH_BY_ID[id].cost, 0))}`,
-    options: ids.map((id) => ({
-      label: `${ARCH_BY_ID[id].name} → ${OWNER_ACCEPT[id].map((o) => OWNERS[o].name).join(" or ")}`,
-      expected: true,
-      why:
-        id === "foundation"
-          ? "Head of Customer Success (or the CCO). It starts first: the community, the referral thank-you and the KPIs all build on the membership."
-          : id === "suite"
-            ? "A black box: nobody at ConnectIT can check the rewards it pays. Funding it breaks the third rule; the check flags it."
-            : id === "relaunch"
-              ? "It buys renewals with margin instead of value, and €80,000 would push the plan over."
-              : `The owner who can change it without asking anyone: ${OWNERS[OWNER_ACCEPT[id][0]].profile}`,
-    })),
-    teachingNote: `The check tests three rules: the membership programme starts no later than the first other item, total within ${euro(R2_BUDGET)}, nothing funded is a black box. Owners are not checked by the app; use this key. Leaving out the referral page instead of the anti-misuse rules does not defend: without the check, the thank-you invites self-referrals.`,
+    title: "Step A · The architecture: when does each item happen?",
+    expected: `Model: Now ${MODEL_ARCH.filter((id) => MODEL_TIER[id] === "now").map((id) => PANEL[id].short).join(", ")} · After the uptake ${MODEL_ARCH.filter((id) => MODEL_TIER[id] === "later").map((id) => PANEL[id].short).join(", ")} (${euro(spent)} of ${euro(R2_BUDGET)}) · Not now ${ARCH_IDS.filter((id) => MODEL_TIER[id] === "not").map((id) => PANEL[id].short).join(", ")}`,
+    options: ARCH_IDS.map((id) => ({ label: `${PANEL[id].short} → ${TIER_LABEL[MODEL_TIER[id]]}`, expected: MODEL_TIER[id] !== "not", why: why[id] })),
+    teachingNote: `The panel shows four tests as facts, none a verdict, and the learner decides. A different, well-reasoned set is acceptable (CLAUDE.md #38): for example the community Now (the uptake test opens, ${planOf({ tier: alt }, 0).holding} of ${planOf({ tier: alt }, 0).applicable} tests hold), the anti-misuse rules or the referral page cut to make room, or going over the budget with a reason. Doing nothing (no item Now) is incomplete, not wrong: the missing list asks for at least one. The model set holds all four tests in the brief's figures and opens the uptake test when the uptake is 15 points weaker (the referral programme, ${rangeOf({ tier: MODEL_TIER }).risk[1]}% of the money at risk).`,
   };
 }
 
 export function decisionKey(): AnswerKeyBlock {
   return {
-    title: "Block 3.6 · The strategic decision",
+    title: "Step B · The strategic decision",
     expected: DECISIONS.find((d) => d.id === MODEL_DECISION)!.label,
     options: DECISIONS.map((d) => ({ label: d.label, expected: d.id !== "wait", why: d.id === MODEL_DECISION ? d.why : d.id === "commit" ? `${d.why} ${d.rejected}` : d.rejected })),
-    teachingNote: "“Launch everything” and “Pilot with the 150 most active” are both decisions, with different reasoning; the check outlines only “Wait”, because the brief asks for a decision despite an unclear forecast. Push a learner who launches everything on what the discount costs and what cash per referral invites.",
-  };
-}
-
-export function tripKey(): AnswerKeyBlock {
-  const k = KPIS.find((x) => x.id === MODEL_TRIPWIRE.kpi)!;
-  return {
-    title: "Block 3.6 · The tripwire",
-    expected: `${k.label} ≥ ${MODEL_TRIPWIRE.threshold}% by month ${MODEL_TRIPWIRE.month}, else adjust one rule`,
-    options: KPIS.map((x) => ({ label: `${x.label} (baseline ${x.baseline}${x.unit === "%" ? "%" : ` ${x.unit}`})`, expected: x.behaviour, why: x.behaviour ? "How customers behave: the result the system is meant to move." : "Counts ConnectIT's own output or sign-ups, not how customers behaved." })),
-    teachingNote: "Any customer metric with a threshold better than its baseline defends. Members signed up is the tempting one: it rises fast, but signing up is not staying. Referral e-mails and newsletter opens count our own output.",
+    teachingNote: "“Launch the full programme” and “Pilot in stages” are both decisions, with different reasoning; the plan rejects only “Wait”, because the brief asks for a decision despite an unclear forecast: customers rarely know in advance what will keep them, they show it by what they use and whether they renew. All three stay selectable. The panel shows one plain hint when the decision and Step A disagree (wait while Step A builds; launch everything with a discount while Step A leaves the discount out) and the learner explains the contradiction in their reason. Push a learner who launches everything on what the 10% discount costs on every renewal and what cash for referrals invites.",
   };
 }

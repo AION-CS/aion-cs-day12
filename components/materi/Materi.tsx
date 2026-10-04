@@ -2,20 +2,30 @@
 
 import { CARDS_A } from "@/components/materi/CardsA";
 import { CARDS_B } from "@/components/materi/CardsB";
+import { useCardMore } from "@/store/useCardMore";
+import { OptionalSection } from "@/components/ui/OptionalSection";
 import { ReferencesAccordion } from "@/components/ui/ReferencesAccordion";
-import { SECTIONS } from "@/data/materialIndex";
+import { MATERIALS, SECTIONS, materialAnchorId } from "@/data/materialIndex";
 import type { RefKey } from "@/data/references";
 import { tt } from "@/lib/lang";
 
 const REFS_A: RefKey[] = ["reichheld1990", "dowling1997", "bolton2000", "mcalexander2002", "kumar2010", "schmitt2011", "provost2013", "kaplan1992", "ries2011", "kohavi2020", "gneezy2000", "ryu2007", "hubbard2014", "reichheld2003"];
 const REFS_B: RefKey[] = ["reichheld1990", "dowling1997", "bolton2000", "mcalexander2002", "kaplan1992", "reichheld2003", "kohavi2020", "ryu2007", "schmitt2011", "courtney1997", "klein2007"];
 
+const CARDS_A_META = MATERIALS.filter((m) => m.block === "A");
+const CARDS_B_META = MATERIALS.filter((m) => m.block === "B");
+
 function Block({ id, title, intro, children }: { id: string; title: string; intro: string; children: React.ReactNode }) {
+  const all = useCardMore((s) => s.all);
+  const setAll = useCardMore((s) => s.setAll);
   return (
     <section id={id} aria-labelledby={`${id}-h`} className="space-y-4">
       <header className="space-y-1">
         <p className="smallcaps text-accent">{title}</p>
         <h2 id={`${id}-h`}>{intro}</h2>
+        <button type="button" aria-pressed={all} onClick={() => setAll(!all)} className="btn-ghost btn-sm">
+          {all ? tt("Hide the extra explanations", "Zusatzerklärungen ausblenden") : tt("Show every extra explanation, video and rule", "Alle Zusatzerklärungen, Videos und Regeln zeigen")}
+        </button>
       </header>
       {children}
     </section>
@@ -30,9 +40,22 @@ export function MateriA() {
       <p className="max-w-prose text-body text-ash">
         {tt("Seven cards, Level 1 and Level 2 in one run: knowledge first (transactional and relational retention, membership models, customers as multipliers, what a referral is worth), then application (KPIs for memberships and referrals, fair tests and wrong incentives, choosing measures). Every diagram uses Werra Datentechnik, another company, so the task is never answered for you.", "Sieben Karten, Level 1 und Level 2 in einem Durchgang: zuerst Wissen (transaktionale und relationale Bindung, Mitgliedsmodelle, Kunden als Multiplikatoren, was eine Empfehlung wert ist), dann Anwendung (KPIs für Mitgliedschaften und Empfehlungen, faire Tests und falsche Anreize, Maßnahmen wählen). Jedes Diagramm nutzt Werra Datentechnik, ein anderes Unternehmen, damit die Aufgabe nie für Sie gelöst wird.")}
       </p>
-      {CARDS_A.map((C, i) => (
-        <C key={i} />
-      ))}
+      {CARDS_A.map((C, i) => {
+        const m = CARDS_A_META[i];
+        return m.optional ? (
+          <OptionalSection
+            key={i}
+            id={materialAnchorId(m.id)}
+            title={`${m.id} · ${m.title}`}
+            minutes={m.minutes}
+            reason={tt("Deepens a card a Core task block already covers. Not needed to complete the Retention Analysis File.", "Vertieft eine Karte, die ein Kern-Block schon abdeckt. Für die Retention Analysis File nicht nötig.")}
+          >
+            <C />
+          </OptionalSection>
+        ) : (
+          <C key={i} />
+        );
+      })}
       <ReferencesAccordion block="A" keys={REFS_A} note={NOTE()} />
     </Block>
   );
@@ -45,9 +68,22 @@ export function MateriB() {
       <p className="max-w-prose text-body text-ash">
         {tt("Five cards for Level 3. You stop improving single measures and start designing how the whole company retains customers and wins new ones through them. Each card ends in rules the task uses; each diagram uses Ems Systems, another company.", "Fünf Karten für Level 3. Sie verbessern keine einzelnen Maßnahmen mehr, sondern gestalten, wie das ganze Unternehmen Kunden bindet und über sie neue gewinnt. Jede Karte endet mit Regeln, die die Aufgabe nutzt; jedes Diagramm nutzt Ems Systems, ein anderes Unternehmen.")}
       </p>
-      {CARDS_B.map((C, i) => (
-        <C key={i} />
-      ))}
+      {CARDS_B.map((C, i) => {
+        const m = CARDS_B_META[i];
+        return m.optional ? (
+          <OptionalSection
+            key={i}
+            id={materialAnchorId(m.id)}
+            title={`${m.id} · ${m.title}`}
+            minutes={m.minutes}
+            reason={tt("Deepens a card a Core task block already covers. Not needed to complete the Retention System Memo.", "Vertieft eine Karte, die ein Kern-Block schon abdeckt. Für das Retention System Memo nicht nötig.")}
+          >
+            <C />
+          </OptionalSection>
+        ) : (
+          <C key={i} />
+        );
+      })}
       <ReferencesAccordion block="B" keys={REFS_B} note={NOTE()} />
     </Block>
   );

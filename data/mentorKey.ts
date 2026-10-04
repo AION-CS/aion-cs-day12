@@ -6,8 +6,9 @@ import { AB_MODEL, MEANING_TRUTH, MEASURE_TRUTH, PATTERN_IDS, RECORDS, TRUTH_COU
 import type { PatternId, PatternRow, RecId, UncId } from "@/data/patterns";
 import { MEASURE_BY_ID, MODEL_MEASURES, explainBucket } from "@/data/measures";
 import type { MeasureId, ProblemId } from "@/data/measures";
-import { COMP_BY_ID, MODEL_ARCH, MODEL_COMPS, MODEL_GREATEST, MODEL_START, MODEL_TRIGGER, MODEL_TRIPWIRE, OWNER_ACCEPT, OWNER_ACCEPT_LOGIC, SITUATIONS, SOURCES, actionOf, useOf } from "@/data/route2";
-import type { Criterion, LogicRow, OwnerId, Use } from "@/data/route2";
+import { ARCH_BY_ID, COMP_BY_ID, MODEL_COMPS, MODEL_GREATEST, OWNER_ACCEPT_LOGIC, R2_BUDGET, SITUATIONS, SOURCES, actionOf, useOf } from "@/data/route2";
+import { MODEL_ARCH, MODEL_TIER } from "@/data/route2Panel";
+import type { Criterion, LogicRow, Use } from "@/data/route2";
 import { euro, num, tt } from "@/lib/lang";
 import type { L1State, R2State, Score } from "@/store/useStore";
 
@@ -19,12 +20,33 @@ import type { L1State, R2State, Score } from "@/store/useStore";
 export const MENTOR_PASSCODE = "muchson123";
 export const MODEL_ORDER: MeasureId[] = ["stories", "types", "training"];
 
+/** The model reason for the two judged scores of each model measure (CLAUDE.md #45): effect, scalability, and a printed fact. */
+const MEASURE_REASON: Record<string, () => string> = {
+  stories: () =>
+    tt(
+      "Retention effect 3: satisfied customers bring warmer leads, and the thank-you is value, not cash, so it does not buy weak referrals. Economic viability 3: €30,000 for a programme whose reward only costs something when a referred firm signs.",
+      "Wirkung auf die Bindung 3: Zufriedene Kunden bringen wärmere Leads, und das Dankeschön ist Wert, kein Geld, also kauft es keine schwachen Empfehlungen. Wirtschaftlichkeit 3: 30.000 € für ein Programm, dessen Belohnung nur etwas kostet, wenn eine empfohlene Firma unterschreibt.",
+    ),
+  types: () =>
+    tt(
+      "Retention effect 3: customers who know other customers and ConnectIT's people are much harder to lure away, and they learn to use more of the product. Economic viability 3: €40,000 for meetings and a forum that serve all members, although each event grows with the members.",
+      "Wirkung auf die Bindung 3: Kunden, die andere Kunden und die Menschen von ConnectIT kennen, lassen sich viel schwerer abwerben, und sie lernen, mehr vom Produkt zu nutzen. Wirtschaftlichkeit 3: 40.000 € für Treffen und ein Forum, die allen Mitgliedern dienen, auch wenn jede Veranstaltung mit den Mitgliedern wächst.",
+    ),
+  training: () =>
+    tt(
+      "Retention effect 3: the product works better for every member, which is the reason to renew. Economic viability 3: the card says €45,000 and the services are part of the contract, although each member costs expert and support time.",
+      "Wirkung auf die Bindung 3: Das Produkt funktioniert für jedes Mitglied besser, und das ist der Grund zu verlängern. Wirtschaftlichkeit 3: Die Karte nennt 45.000 € und die Services sind Teil des Vertrags, auch wenn jedes Mitglied Experten- und Supportzeit kostet.",
+    ),
+};
+
 export function KEY_L1(): Partial<L1State> {
   return {
     sort: Object.fromEntries(LINES.map((r) => [r.id, r.truth])) as Record<LineId, LevelTag>,
     extraInsight: tt("A membership keeps customers through value they would lose by leaving: a customer who has a named expert, priority support and peers in the user group would give all of that up by switching, so a cheaper competitor has to offer far more than a lower price.", "Eine Mitgliedschaft hält Kunden über Wert, den sie beim Gehen verlieren würden: Ein Kunde mit benanntem Experten, Prioritätssupport und anderen Kunden in der User Group gäbe das alles beim Wechsel auf, sodass ein günstigerer Wettbewerber weit mehr als einen niedrigeren Preis bieten muss."),
-    fig: { F1: String(FORECAST.f1), F2: String(FORECAST.f2), F3: String(FORECAST.f3) },
-    meaning: tt(`Referred leads closed at ${FORECAST.f1}% against ${FORECAST.controlRate}% for marketing leads, ${FORECAST.f2} times as often. With ${num(PILOT.yearly)} referred leads a year that is about ${euro(FORECAST.f3)} extra, so ConnectIT should ask its most satisfied customers first and thank them with value, and test it fairly, because referred firms may have been warmer to begin with.`, `Empfohlene Leads schlossen zu ${num(FORECAST.f1)} % gegenüber ${num(FORECAST.controlRate)} % bei Marketing-Leads ab, ${num(FORECAST.f2)}-mal so oft. Bei ${num(PILOT.yearly)} empfohlenen Leads pro Jahr sind das etwa ${euro(FORECAST.f3)} zusätzlich, also sollte ConnectIT zuerst seine zufriedensten Kunden fragen, sich mit Wert bedanken und das fair testen, weil empfohlene Firmen von Anfang an wärmer gewesen sein könnten.`),
+    meaning: tt(
+      `Referred leads closed at ${FORECAST.f1}% against ${FORECAST.controlRate}% for marketing leads, ${FORECAST.f2} times as often, so ConnectIT should test a referral ask fairly before it builds a programme around it, because satisfied customers refer firms that already fit.`,
+      `Empfohlene Leads schlossen zu ${num(FORECAST.f1)} % gegenüber ${num(FORECAST.controlRate)} % bei Marketing-Leads ab, ${num(FORECAST.f2)}-mal so oft, also sollte ConnectIT eine Empfehlungsbitte fair testen, bevor es ein Programm darum baut, weil zufriedene Kunden Firmen empfehlen, die ohnehin passen.`,
+    ),
     valuable: [...VALUABLE_TRUTH],
     churners: [...CHURN_TRUTH],
     insights: [
@@ -40,7 +62,10 @@ export function KEY_L1(): Partial<L1State> {
     tags: Object.fromEntries(RECORDS.map((r) => [r.id, r.truth])) as Record<RecId, PatternId>,
     unc: ["sample", "cause", "missing", "shift"] as UncId[],
     rows: Object.fromEntries(PATTERN_IDS.map((x) => [x, { risk: riskOf(TRUTH_LEFT[x], TRUTH_COUNTS[x]), meaning: MEANING_TRUTH[x], measure: MEASURE_TRUTH[x] }])) as Record<PatternId, PatternRow>,
-    misread: tt("1) Share of customers who renew (outcome), from the CRM, target 82% by month 5 against 78% today. 2) Share of members who used a benefit in the last 30 days (driver), from the systems, target 60% by month 3. 3) Cost of rewards and discounts per customer kept (guardrail), from finance, must stay below €300.", "1) Anteil der Kunden, die verlängern (Outcome), aus dem CRM, Ziel 82 % bis Monat 5 gegenüber 78 % heute. 2) Anteil der Mitglieder, die in den letzten 30 Tagen einen Vorteil genutzt haben (Treiber), aus den Systemen, Ziel 60 % bis Monat 3. 3) Kosten der Belohnungen und Rabatte pro gehaltenem Kunden (Guardrail), aus der Finanzabteilung, muss unter 300 € bleiben."),
+    misread: tt(
+      "1) Share of customers who renew their contract (outcome), from the contract system, aim: up, above today's rate. 2) Share of members who used at least one member benefit in the last 30 days (driver), from the portal log, aim: up. 3) Referrals rewarded that turn out fake or self-referrals (guardrail), from the CRM, aim: stay under a limit.",
+      "1) Anteil der Kunden, die ihren Vertrag verlängern (Outcome), aus dem Vertragssystem, Ziel: hoch, über der heutigen Quote. 2) Anteil der Mitglieder, die in den letzten 30 Tagen mindestens einen Mitgliedervorteil genutzt haben (Treiber), aus dem Portal-Protokoll, Ziel: hoch. 3) Belohnte Empfehlungen, die sich als gefälscht oder als Selbstempfehlung erweisen (Guardrail), aus dem CRM, Ziel: unter einer Grenze bleiben.",
+    ),
     ab: {
       ...AB_MODEL,
       hyp: tt("If account managers ask for a referral at the quarterly review with a ready intro e-mail, then more referred firms become customers, because satisfied customers refer when it is easy and they are asked at the right moment.", "Wenn Account Manager im Quartalsreview mit einer fertigen Vorstellungs-E-Mail um eine Empfehlung bitten, dann werden mehr empfohlene Firmen Kunden, weil zufriedene Kunden empfehlen, wenn es einfach ist und sie im richtigen Moment gefragt werden."),
@@ -51,6 +76,7 @@ export function KEY_L1(): Partial<L1State> {
     exp: Object.fromEntries(MODEL_MEASURES.map((id) => [id, explainBucket(MEASURE_BY_ID[id].evidence)])) as Record<string, Score>,
     fea: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_BY_ID[id].model.feasibility])) as Record<string, Score>,
     eff: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_BY_ID[id].model.effect])) as Record<string, Score>,
+    reasons: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_REASON[id]()])) as Record<string, string>,
     order: [...MODEL_ORDER],
     why: tt("The referral programme goes first: it scores 27, it costs the same however many customers take part, and referred leads closed 3 times as often as marketing leads. The community comes second, from week 8, because it builds relationships a competitor cannot copy and gives referrers a place to meet peers. The membership tier comes third, with the reviews and priority support that give members a reason to renew. The three cost €115,000 of the €130,000; the discount and the cash bonus are left out because they buy behaviour instead of building value, and the account managers because they do not scale.", "Das Empfehlungsprogramm kommt zuerst: Es erzielt 27, kostet dasselbe, egal wie viele Kunden teilnehmen, und empfohlene Leads schlossen 3-mal so oft ab wie Marketing-Leads. Die Community kommt als Zweites, ab Woche 8, weil sie Beziehungen aufbaut, die ein Wettbewerber nicht kopieren kann, und Empfehlern einen Ort gibt, andere zu treffen. Die Mitgliedsstufe kommt als Drittes, mit Reviews und Prioritätssupport, die Mitgliedern einen Grund zum Verlängern geben. Die drei kosten 115.000 € von 130.000 €; Rabatt und Geldprämie bleiben draußen, weil sie Verhalten kaufen, statt Wert aufzubauen, und die Account Manager, weil sie nicht skalieren."),
   };
@@ -74,22 +100,23 @@ export function KEY_R2(): Partial<R2State> {
     greatest: MODEL_GREATEST,
     greatestWhy: tt("The share of members who used a benefit in the last 30 days is the driver the brief names (retention not sustainable): members who use their added value renew. It is linked to renewals, moves the week the programme changes, covers every member and is counted by the systems, so every part of the programme can be steered by it within weeks.", "Der Anteil der Mitglieder, die in den letzten 30 Tagen einen Vorteil genutzt haben, ist der Treiber, den der Auftrag nennt (Bindung nicht nachhaltig): Mitglieder, die ihren Mehrwert nutzen, verlängern. Er ist mit Verlängerungen verbunden, bewegt sich in der Woche, in der sich das Programm ändert, deckt jedes Mitglied ab und wird von den Systemen gezählt, sodass sich jeder Teil des Programms innerhalb von Wochen daran steuern lässt."),
     logic,
-    alloc: Object.fromEntries(MODEL_ARCH.map((id) => [id, true])),
-    start: { ...MODEL_START } as Record<string, number>,
-    owner: Object.fromEntries(MODEL_ARCH.map((id) => [id, OWNER_ACCEPT[id][0]])) as Record<string, OwnerId>,
-    trigger: Object.fromEntries(MODEL_ARCH.map((id) => [id, MODEL_TRIGGER[id as keyof typeof MODEL_TRIGGER]])) as Record<string, string>,
-    postponed: tt("The AI loyalty engine (€60,000) is left out: the six funded items cost €160,000 of the €180,000, the engine would push the plan €40,000 over, and nobody at ConnectIT could check the rewards it pays, which risks exactly the wrong incentives and costs we must avoid. The loyalty discount (€80,000) buys renewals with margin instead of value.", "Die KI-Loyalty-Engine (60.000 €) bleibt draußen: Die sechs finanzierten Punkte kosten 160.000 € von 180.000 €, die Engine brächte den Plan 40.000 € über das Budget, und niemand bei ConnectIT könnte die Belohnungen prüfen, die sie zahlt; das riskiert genau die falschen Anreize und Kosten, die wir vermeiden müssen. Der Treuerabatt (80.000 €) kauft Verlängerungen mit Marge statt mit Wert."),
-    pickup: tt("If the renewal rate reaches 82% by month 6, we look again at a points programme for the most active members, for the next year.", "Erreicht die Verlängerungsquote bis Monat 6 82 %, prüfen wir für das nächste Jahr erneut ein Punkteprogramm für die aktivsten Mitglieder."),
+    tier: { ...MODEL_TIER },
+    vision: tt(
+      "ConnectIT keeps customers through added value, not discounts: members get a quarterly review, priority support and training seats, and every referral is thanked on both sides once the new firm signs. Every part has a KPI before it grows, so retention and referrals feed each other.",
+      "ConnectIT hält Kunden durch Mehrwert, nicht durch Rabatte: Mitglieder bekommen ein Quartalsreview, Prioritätssupport und Schulungsplätze, und jede Empfehlung wird auf beiden Seiten belohnt, sobald die neue Firma abschließt. Jeder Baustein hat einen KPI, bevor er wächst, sodass sich Kundenbindung und Empfehlungen gegenseitig stärken.",
+    ),
+    giveUp: tt(
+      `The plan gives me the ConnectIT Plus membership with its three added values, the CRM KPIs with a monthly review, the anti-misuse rules, the referral page with testimonials and the referral programme on a thank-you members already use. The community starts once the first review shows what members use. It costs me the AI loyalty engine and the 10% discount, which give no added value and take margin or cannot be checked. ${euro(R2_BUDGET - MODEL_ARCH.reduce((x, id) => x + ARCH_BY_ID[id].cost, 0))} stay unspent. If the uptake turns out weaker, the referral programme rests on a benefit used by less than 80% of pilot members, so I watch it first.`,
+      `Der Plan gibt mir die Mitgliedschaft ConnectIT Plus mit ihren drei Mehrwerten, die KPIs im CRM mit einem monatlichen Review, die Regeln gegen Missbrauch, die Empfehlungsseite mit Kundenstimmen und das Empfehlungsprogramm auf einem Dankeschön, das Mitglieder schon nutzen. Die Community startet, sobald das erste Review zeigt, was Mitglieder nutzen. Er kostet mich die KI-Loyalty-Engine und den 10-%-Rabatt, die keinen Mehrwert geben und Marge kosten oder sich nicht prüfen lassen. ${euro(R2_BUDGET - MODEL_ARCH.reduce((x, id) => x + ARCH_BY_ID[id].cost, 0))} bleiben ungenutzt. Fällt die Nutzung schwächer aus, beruht das Empfehlungsprogramm auf einem Vorteil, den weniger als 80 % der Pilotmitglieder nutzen, also beobachte ich es zuerst.`,
+    ),
     decision: "stage",
-    assumptions: [
-      tt("Members stay because of the added value, not because of the attention of the pilot. This is wrong if members who used no benefit renew as often as members who did, by month 5.", "Mitglieder bleiben wegen des Mehrwerts, nicht wegen der Aufmerksamkeit im Pilot. Das ist falsch, wenn Mitglieder, die keinen Vorteil nutzten, bis Monat 5 genauso oft verlängern wie Mitglieder, die einen nutzten."),
-      tt("Customers refer for a value thank-you, not only for cash. This is wrong if fewer than 10 referred firms have become customers by month 4.", "Kunden empfehlen für ein Dankeschön in Wert, nicht nur für Geld. Das ist falsch, wenn bis Monat 4 weniger als 10 empfohlene Firmen Kunden geworden sind."),
-      tt("The misuse rules keep referrals honest. This is wrong if more than 2 referrals a month turn out to be fake or self-referrals.", "Die Missbrauchsregeln halten Empfehlungen ehrlich. Das ist falsch, wenn sich mehr als 2 Empfehlungen pro Monat als gefälscht oder als Selbstempfehlung erweisen."),
-    ],
-    tripKpi: MODEL_TRIPWIRE.kpi,
-    tripThreshold: String(MODEL_TRIPWIRE.threshold),
-    tripMonth: MODEL_TRIPWIRE.month,
-    tripAction: "adjust",
-    challenge: tt("I keep the added values and the community, and I do not pay cash per referral. The programme works where it was built: 55% of members use a benefit, the earliest sign. 78% to 79% after three months rests on too few renewals to judge; the tripwire of 82% in month 6 decides. First I check the six self-referrals and whether the check before the thank-you worked. The one change: the thank-you is paid only after the referred firm has signed and been checked. A €500 cash bonus would buy more of exactly the referrals that failed; stopping the community would remove what makes members harder to lure away.", "Ich behalte die Mehrwerte und die Community, und ich zahle kein Geld pro Empfehlung. Das Programm wirkt, wo es aufgebaut wurde: 55 % der Mitglieder nutzen einen Vorteil, das früheste Zeichen. 78 % zu 79 % nach drei Monaten beruhen auf zu wenigen Verlängerungen für ein Urteil; der Tripwire von 82 % in Monat 6 entscheidet. Zuerst prüfe ich die sechs Selbstempfehlungen und ob die Prüfung vor dem Dankeschön funktioniert hat. Die eine Änderung: Das Dankeschön gibt es erst, wenn die empfohlene Firma unterschrieben hat und geprüft ist. Eine Geldprämie von 500 € kaufte mehr genau der Empfehlungen, die versagt haben; die Community zu stoppen, nähme das weg, was Mitglieder schwerer abwerbbar macht."),
+    decisionWhy: tt(
+      "It is the decision the brief asks for despite an unclear forecast: start now with the added values that are proven, for the 150 most active customers, and measure from the first month through the KPIs. The community waits until the review shows what members use, and the discount and the AI loyalty engine stay out because they give no added value and cost margin or cannot be checked.",
+      "Es ist die Entscheidung, die der Auftrag trotz unklarer Prognose verlangt: jetzt mit den belegten Mehrwerten für die 150 aktivsten Kunden starten und ab dem ersten Monat über die KPIs messen. Die Community wartet, bis das Review zeigt, was Mitglieder nutzen, und Rabatt und KI-Loyalty-Engine bleiben draußen, weil sie keinen Mehrwert geben und Marge kosten oder sich nicht prüfen lassen.",
+    ),
+    watch: tt(
+      "I watch the renewal rate: today it is 78%, and if it is not clearly above that by month 3 on enough renewals, I stop adding parts and fix the benefits members do not use. I also watch the uptake behind the referral programme: if fewer than 80% of members use the training seats, I pause the referral thank-you until they do.",
+      "Ich beobachte die Verlängerungsquote: Heute liegt sie bei 78 %, und liegt sie bis Monat 3 bei genug Verlängerungen nicht deutlich darüber, höre ich auf, Bausteine hinzuzufügen, und behebe die Vorteile, die Mitglieder nicht nutzen. Ich beobachte auch die Nutzung hinter dem Empfehlungsprogramm: Nutzen weniger als 80 % der Mitglieder die Schulungsplätze, pausiere ich das Empfehlungs-Dankeschön, bis sie es tun.",
+    ),
   };
 }

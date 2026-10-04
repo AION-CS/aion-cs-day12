@@ -163,3 +163,19 @@ export const AB_MODEL = { change: "one", control: "random", kpi: "conv", size: "
 export const hasHypothesis = (s: string) => /\b(if|wenn|falls)\b/i.test(s) && /\b(because|since|as|weil|da|denn)\b/i.test(s);
 /** A decision rule names a number to decide by. */
 export const hasRuleNumber = (s: string) => /\d/.test(s);
+
+/** The decisive phrase inside each metric's own text, for "Highlight the key words" (never which kind it points to). */
+export const REC_KEY: Record<string, string> = bi({
+  p01: t("customers who renew their contract", "Kunden, die ihren Vertrag verlängern"),
+  p02: t("Revenue from existing customers per quarter", "Umsatz mit Bestandskunden pro Quartal"),
+  p03: t("New customers won through referrals", "Über Empfehlungen gewonnene Neukunden"),
+  p04: t("used at least one member benefit in the last 30 days", "in den letzten 30 Tagen mindestens einen Mitgliedervorteil genutzt haben"),
+  p05: t("Referrals submitted per 100 customers", "Eingereichte Empfehlungen pro 100 Kunden"),
+  p06: t("came to a user group meeting this year", "dieses Jahr zu einem User-Group-Treffen kamen"),
+  p07: t("Cost of rewards and discounts per customer kept", "Kosten der Belohnungen und Rabatte pro gehaltenem Kunden"),
+  p08: t("turned out to be fake or self-referrals", "als gefälscht oder als Selbstempfehlung erwiesen"),
+  p09: t("complain about being asked for referrals too often", "sich beschweren, zu oft nach Empfehlungen gefragt zu werden"),
+  p10: t("Members signed up for the programme", "Für das Programm angemeldete Mitglieder"),
+  p11: t("Member newsletters sent per month", "Versandte Mitglieder-Newsletter pro Monat"),
+  p12: t("Likes on community posts", "Likes auf Community-Posts"),
+});

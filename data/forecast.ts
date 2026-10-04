@@ -1,7 +1,7 @@
 import { bi, t } from "@/lib/lang";
 
 /**
- * Task 1 · Block 1.2, and the worked example of Materi A4: what a referral is worth. ConnectIT's leads last year, split by where they
+ * Task 1 · Block 1.2 (Optional, read-only: the rates are PRINTED, no figure is asked for, CLAUDE.md #44) and the worked example of Materi A4: what a referral is worth. ConnectIT's leads last year, split by where they
  * came from: marketing (ads, fairs, cold calls) or a referral by an existing customer (Case assumption). The method is
  *
  *   close rate                   = deals ÷ leads × 100
@@ -33,60 +33,6 @@ export const FORECAST = {
     return extraOf(PILOT.yearly, this.f1, this.controlRate, PILOT.order);
   },
 };
-
-export type FigureId = "F1" | "F2" | "F3";
-export const FIGURE_IDS: FigureId[] = ["F1", "F2", "F3"];
-
-export const FIGURES = bi({
-  F1: {
-    id: "F1" as FigureId,
-    label: t("F1 · Close rate of referred leads, %", "F1 · Abschlussquote empfohlener Leads, %"),
-    question: t("Of the leads that came through a referral by an existing customer, what share became a deal?", "Welcher Anteil der Leads, die über die Empfehlung eines Bestandskunden kamen, wurde zu einem Abschluss?"),
-    unit: "%",
-    example: "12.5",
-    answer: FORECAST.f1,
-    formula: t("Close rate = deals ÷ leads × 100. Use the two rows of the referred leads.", "Abschlussquote = Abschlüsse ÷ Leads × 100. Nutzen Sie die zwei Zeilen der empfohlenen Leads."),
-    taughtIn: "A4" as const,
-    clue: t("Did you divide the deals by the leads of the same group, and multiply by 100?", "Haben Sie die Abschlüsse durch die Leads derselben Gruppe geteilt und mit 100 multipliziert?"),
-    sources: [
-      { label: t("Last year · referred by a customer · leads", "Letztes Jahr · von einem Kunden empfohlen · Leads"), value: "150", target: "fc-var-sent" },
-      { label: t("Last year · referred by a customer · deals", "Letztes Jahr · von einem Kunden empfohlen · Abschlüsse"), value: "45", target: "fc-var-orders" },
-    ],
-  },
-  F2: {
-    id: "F2" as FigureId,
-    label: t("F2 · Lift: how many times the close rate of marketing leads", "F2 · Lift: wie viel Mal die Abschlussquote der Marketing-Leads"),
-    question: t("How many times higher is the close rate of referred leads than that of leads from marketing?", "Wie viel Mal höher ist die Abschlussquote empfohlener Leads als die der Leads aus dem Marketing?"),
-    unit: "×",
-    example: "1.5",
-    answer: FORECAST.f2,
-    formula: t("Lift = close rate of referred leads ÷ close rate of marketing leads. Work out the marketing rate from its rows first.", "Lift = Abschlussquote empfohlener Leads ÷ Abschlussquote der Marketing-Leads. Berechnen Sie die Marketing-Quote zuerst aus ihren Zeilen."),
-    taughtIn: "A4" as const,
-    clue: t("You need two rates from two pairs of rows. Is the second one worked out from the marketing rows, the same way as F1?", "Sie brauchen zwei Quoten aus zwei Zeilenpaaren. Ist die zweite aus den Marketing-Zeilen berechnet, genauso wie F1?"),
-    sources: [
-      { label: t("Your F1 (close rate of referred leads)", "Ihr F1 (Abschlussquote empfohlener Leads)"), value: "F1", target: "fig-F1" },
-      { label: t("Last year · from marketing · leads", "Letztes Jahr · aus dem Marketing · Leads"), value: "600", target: "fc-ctl-sent" },
-      { label: t("Last year · from marketing · deals", "Letztes Jahr · aus dem Marketing · Abschlüsse"), value: "60", target: "fc-ctl-orders" },
-    ],
-  },
-  F3: {
-    id: "F3" as FigureId,
-    label: t("F3 · Extra revenue a year, €", "F3 · Zusätzlicher Umsatz pro Jahr, €"),
-    question: t("If 400 leads next year came through referrals instead of marketing and customers behaved as last year, how much extra revenue would it bring in a year?", "Wenn im nächsten Jahr 400 Leads über Empfehlungen statt über das Marketing kämen und Kunden sich wie im letzten Jahr verhielten: Wie viel zusätzlichen Umsatz brächte das in einem Jahr?"),
-    unit: "€",
-    example: "12500",
-    answer: FORECAST.f3,
-    formula: t("Extra revenue = referred leads a year × (close rate of referred leads − close rate of marketing leads, as a share of one) × average deal value.", "Zusätzlicher Umsatz = empfohlene Leads pro Jahr × (Abschlussquote empfohlener Leads − Abschlussquote der Marketing-Leads, als Anteil von eins) × durchschnittlicher Auftragswert."),
-    taughtIn: "A4" as const,
-    clue: t("Only the difference between the two rates is extra, and it has to be a share of one (1 point = 0.01) before you multiply.", "Nur der Unterschied zwischen den beiden Quoten ist zusätzlich, und er muss ein Anteil von eins sein (1 Punkt = 0,01), bevor Sie multiplizieren."),
-    sources: [
-      { label: t("Next year · referred leads a year", "Nächstes Jahr · empfohlene Leads pro Jahr"), value: "400", target: "fc-yearly" },
-      { label: t("Your F1 (close rate of referred leads)", "Ihr F1 (Abschlussquote empfohlener Leads)"), value: "F1", target: "fig-F1" },
-      { label: t("Last year · from marketing · leads and deals (its rate)", "Letztes Jahr · aus dem Marketing · Leads und Abschlüsse (ihre Quote)"), value: "60 ÷ 600", target: "fc-ctl-orders" },
-      { label: t("All deals · average deal value", "Alle Aufträge · durchschnittlicher Auftragswert"), value: t("€8,000", "8.000 €"), target: "fc-order" },
-    ],
-  },
-});
 
 /** The worked example of Materi A4: a different company (Werra Datentechnik), the same method on other numbers. Case assumption. */
 export const MOSEL = { control: { sent: 500, orders: 40 }, variant: { sent: 100, orders: 20 }, yearly: 300, order: 5000 };

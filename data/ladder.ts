@@ -110,3 +110,16 @@ export const LEVEL_TESTS = bi([
   { name: t("Incentive or service?", "Anreiz oder Service?"), test: t("Ask what the customer receives. Money or its equivalent is an incentive, even when it is called a benefit; help, advice or know-how is a service, even when it is free.", "Fragen Sie, was der Kunde erhält. Geld oder etwas Gleichwertiges ist ein Anreiz, auch wenn es Vorteil heißt; Hilfe, Beratung oder Know-how ist ein Service, auch wenn es kostenlos ist.") },
   { name: t("Service or community?", "Service oder Community?"), test: t("Ask who gives the value. ConnectIT's own staff: a service. Other customers, or customers together with ConnectIT: a community.", "Fragen Sie, wer den Wert gibt. Die eigenen Mitarbeitenden von ConnectIT: ein Service. Andere Kunden, oder Kunden gemeinsam mit ConnectIT: eine Community.") },
 ]);
+
+/** The decisive phrase inside each benefit's own text, for "Highlight the key words" (never which kind it points to). */
+export const LINE_KEY: Record<string, string> = bi({
+  l1: t("10% off every renewal", "10 % Rabatt auf jede Verlängerung"),
+  l2: t("A named expert reviews your setup with you every quarter", "Ein benannter Experte prüft jedes Quartal Ihr Setup mit Ihnen"),
+  l3: t("members meet other IT leads at a user group", "Mitglieder andere IT-Leitungen in einer User Group"),
+  l4: t("collect points on every invoice and exchange them for vouchers", "sammeln Punkte auf jede Rechnung und tauschen sie gegen Gutscheine"),
+  l5: t("answered within two hours, day and night", "innerhalb von zwei Stunden beantwortet, Tag und Nacht"),
+  l6: t("welcome gift worth €150", "Willkommensgeschenk im Wert von 150 €"),
+  l7: t("votes each year on which modules we build next", "stimmt jedes Jahr ab, welche Module wir als Nächstes bauen"),
+  l8: t("Two free training seats a year", "Zwei kostenlose Schulungsplätze pro Jahr"),
+  l9: t("members' admins answer each other's questions", "die Admins der Mitglieder einander Fragen beantworten"),
+});
