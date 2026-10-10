@@ -44,7 +44,7 @@ export function Block11() {
       minutes={BLOCK_MINUTES["1.1"]}
       findIt={tt("Route 1 → Task 1 → the nine benefits on the sort board below, from ConnectIT's first draft of a membership programme, collected from marketing, sales and Customer Success. Answer on the sort board.", "Route 1 → Task 1 → die neun Vorteile auf der Sortiertafel unten, aus dem ersten Entwurf eines Mitgliedsprogramms von ConnectIT, gesammelt bei Marketing, Vertrieb und Customer Success. Antworten Sie auf der Sortiertafel.")}
     >
-      <MaterialRefs refs={["A1", "A2", "A3"]} />
+      <MaterialRefs refs={["A2"]} />
       <PlacementBoard<LevelTag>
         items={LINES.map((r) => ({ id: r.id, meta: r.source, text: r.text }))}
         bins={LEVEL_TAGS.map((t) => ({ id: t.id, label: t.label, hint: t.hint }))}
@@ -68,9 +68,9 @@ export function Block11() {
         noun={tt("benefit", "Vorteil")}
         intro={tt("Drag a benefit onto the kind of value it gives, or select it and then select a kind. Select a placed one to move it again. One kind per benefit: incentive, service added value or community.", "Ziehen Sie einen Vorteil auf die Art von Wert, die er gibt, oder wählen Sie ihn aus und dann eine Art. Wählen Sie einen platzierten, um ihn zu verschieben. Eine Art pro Vorteil: Anreiz, Service-Mehrwert oder Community.")}
         tests={
-          <RevealHint id="sort-tests" label={tt("Show the test questions", "Testfragen zeigen")} title={tt("Test questions · taught in Materi A1 to A3", "Testfragen · aus Materi A1 bis A3")}>
+          <RevealHint id="sort-tests" label={tt("Show the test questions", "Testfragen zeigen")} title={tt("Test questions · taught in Materi A2", "Testfragen · aus Materi A2")}>
             <div className="space-y-2 text-caption text-ink">
-              <p>{tt("Ask these of every benefit. They repeat the tests from Materi A1 and A2; they never say which benefit goes where.", "Stellen Sie diese Fragen zu jedem Vorteil. Sie wiederholen die Tests aus Materi A1 und A2; sie sagen nie, welcher Vorteil wohin gehört.")}</p>
+              <p>{tt("Ask these of every benefit. They repeat the tests from Materi A2; they never say which benefit goes where.", "Stellen Sie diese Fragen zu jedem Vorteil. Sie wiederholen die Tests aus Materi A2; sie sagen nie, welcher Vorteil wohin gehört.")}</p>
               <ul className="space-y-1.5">
                 {LEVEL_TESTS.map((c) => (
                   <li key={c.name}>
@@ -79,7 +79,7 @@ export function Block11() {
                   </li>
                 ))}
               </ul>
-              <MaterialRefs refs={["A2", "A3"]} lead={tt("Taught in", "Gelehrt in")} />
+              <MaterialRefs refs={["A2"]} lead={tt("Taught in", "Gelehrt in")} />
             </div>
           </RevealHint>
         }
@@ -97,7 +97,7 @@ export function Block11() {
           id="extra-insight-kit"
           refs={[
             { label: tt("What the case says (the brief)", "Was der Fall sagt (der Auftrag)"), value: tt("low retention, expensive new customers, potential of existing customers unused", "niedrige Bindung, teure Neukunden, Potenzial der Bestandskunden ungenutzt"), target: "case-brief" },
-            { label: tt("The three kinds of value (Materi A1 and A2)", "Die drei Arten von Wert (Materi A1 und A2)"), value: tt("incentive · service added value · community", "Anreiz · Service-Mehrwert · Community"), target: "mat-A2" },
+            { label: tt("The three kinds of value (Materi A2)", "Die drei Arten von Wert (Materi A2)"), value: tt("incentive · service added value · community", "Anreiz · Service-Mehrwert · Community"), target: "mat-A2" },
             { label: tt("The nine benefits above", "Die neun Vorteile oben"), value: tt("see what the teams already put in the draft", "sehen Sie, was die Teams schon in den Entwurf geschrieben haben"), target: IDS.line(LINES[0].id) },
           ]}
           steps={[
@@ -234,7 +234,7 @@ export function Block13() {
       id="block-1-3"
       title={tt("Block 1.3 · Referrers, discount seekers, and three retention approaches", "Block 1.3 · Empfehler, Rabattsuchende, und drei Bindungsansätze")}
       kind="OBJECTIVE + JUDGED"
-      core
+      core={false}
       minutes={BLOCK_MINUTES["1.3"]}
       findIt={tt("Route 1 → Task 1 → the table “Eight existing customers” below: annual contract, satisfaction in the last survey, whether they are in regular contact with other firms of their industry, and what they talk about most. Answer in the two lists and the three fields under it.", "Route 1 → Task 1 → die Tabelle „Acht Bestandskunden“ unten: Jahresvertrag, Zufriedenheit in der letzten Befragung, ob sie in regelmäßigem Kontakt mit anderen Firmen ihrer Branche stehen, und worüber sie vor allem sprechen. Antworten Sie in den zwei Listen und den drei Feldern darunter.")}
     >

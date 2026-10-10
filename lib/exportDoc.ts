@@ -138,6 +138,8 @@ export function analysisBody(p: Persisted): string {
   const optNote = tt("Optional block · not filled in.", "Optionaler Block · nicht ausgefüllt.");
   const optTag = tt(" · Optional", " · Optional");
   const has12 = l1.meaning.trim() !== "";
+  const has13 = l1.valuable.length > 0 || l1.churners.length > 0 || l1.insights.some((x) => x.text.trim() !== "");
+  const has21 = RECORDS.some((r) => !!l1.tags[r.id]) || l1.misread.trim() !== "";
   const has14 = Object.values(l1.reflect).some((v) => v.trim() !== "");
   const has22 = l1.unc.length > 0 || PATTERN_IDS.some((x) => l1.rows[x].risk || l1.rows[x].meaning || l1.rows[x].measure);
   const has23 = l1.ab.hyp.trim() !== "" || l1.ab.rule.trim() !== "" || AB_PARTS.some((k) => !!l1.ab[k]);
@@ -180,10 +182,14 @@ export function analysisBody(p: Persisted): string {
 <h3>${esc(tt("An advantage of a membership model", "Ein Vorteil eines Mitgliedsmodells"))}</h3>${para(l1.extraInsight)}
 <h3>${esc(tt("1.2 · What a referral is worth", "1.2 · Was eine Empfehlung wert ist"))}${esc(optTag)}</h3>
 ${has12 ? `${pilotTable}${para(l1.meaning)}` : optEmpty}
-<h2>${esc(tt("1.3 · Referrers, discount seekers, and three retention approaches", "1.3 · Empfehler, Rabattsuchende, und drei Bindungsansätze"))}</h2>
-<p><strong>${esc(tt("Ask first for a referral:", "Zuerst um eine Empfehlung bitten:"))}</strong> ${names(l1.valuable)}</p>
+<h3>${esc(tt("1.3 · Referrers, discount seekers, and three retention approaches", "1.3 · Empfehler, Rabattsuchende, und drei Bindungsansätze"))}${esc(optTag)}</h3>
+${
+  has13
+    ? `<p><strong>${esc(tt("Ask first for a referral:", "Zuerst um eine Empfehlung bitten:"))}</strong> ${names(l1.valuable)}</p>
 <p><strong>${esc(tt("Would join only for a discount:", "Würden nur wegen eines Rabatts beitreten:"))}</strong> ${names(l1.churners)}</p>
-${insights}
+${insights}`
+    : optEmpty
+}
 <h2>${esc(tt("1.4 · Coaching reflection", "1.4 · Coaching-Reflexion"))}${esc(optTag)}</h2>
 ${
   has14
@@ -194,10 +200,14 @@ ${
 }
 
 <h2>${esc(tt("Part 2 · Make it measurable and choose", "Teil 2 · Messbar machen und auswählen"))}</h2>
-<h3>${esc(tt("2.1 · The twelve metrics, as you tagged them", "2.1 · Die zwölf Kennzahlen, wie Sie sie zugeordnet haben"))}</h3>
-<table><thead><tr><th>${esc(tt("Metric", "Kennzahl"))}</th><th>${esc(tt("What it counts", "Was sie zählt"))}</th><th>${esc(tt("Last year", "Letztes Jahr"))}</th><th>${esc(tt("Kind", "Art"))}</th></tr></thead><tbody>${tagRows}</tbody></table>${tagNote}
+<h3>${esc(tt("2.1 · The twelve metrics, as you tagged them", "2.1 · Die zwölf Kennzahlen, wie Sie sie zugeordnet haben"))}${esc(optTag)}</h3>
+${
+  has21
+    ? `<table><thead><tr><th>${esc(tt("Metric", "Kennzahl"))}</th><th>${esc(tt("What it counts", "Was sie zählt"))}</th><th>${esc(tt("Last year", "Letztes Jahr"))}</th><th>${esc(tt("Kind", "Art"))}</th></tr></thead><tbody>${tagRows}</tbody></table>${tagNote}
 ${tallySvg(p)}
-<h3>${esc(tt("My three KPIs", "Meine drei KPIs"))}</h3>${para(l1.misread)}
+<h3>${esc(tt("My three KPIs", "Meine drei KPIs"))}</h3>${para(l1.misread)}`
+    : optEmpty
+}
 <h2>${esc(tt("2.2 · What each kind of metric is worth", "2.2 · Was jede Art von Kennzahl wert ist"))}${esc(optTag)}</h2>
 ${
   has22
